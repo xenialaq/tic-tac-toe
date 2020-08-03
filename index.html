@@ -1,0 +1,280 @@
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<style>
+			#board td {
+				background: azure;
+				height: 50px;
+				width: 50px;
+				text-align: center;
+				vertical-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<article>
+			<label for="player1Name" id="player1NameLabel">Player 1</label>
+			<input type="text" id="player1Name" />
+			<label for="player2Name" id="player2NameLabel">Player 2</label>
+			<input type="text" id="player2Name" />
+			<table id="board">
+				<tr id="r1">
+					<td id="c1-1"></td>
+					<td id="c1-2"></td>
+					<td id="c1-3"></td>
+				</tr>
+				<tr id="r2">
+					<td id="c2-1"></td>
+					<td id="c2-2"></td>
+					<td id="c2-3"></td>
+				</tr>
+				<tr id="r3">
+					<td id="c3-1"></td>
+					<td id="c3-2"></td>
+					<td id="c3-3"></td>
+				</tr>
+			</table>
+			<button id="start">Start</button>
+			<button id="reset">Reset</button>
+		</article>
+		<script>
+			var p1Key = "PLAYER1";
+			var p2Key = "PLAYER2";
+			function initPlayer(player1Name, player2Name) {
+				var player1Playing = Math.random() > 0;
+				return {
+					active: player1Playing ? p1Key : p2Key,
+					[p1Key]: {name: player1Name, pick: player1Playing ? 'X' : 'O'},
+					[p2Key]: {name: player2Name, pick: player1Playing ? 'O' : 'X'},
+				}
+			}
+
+			var gameState = {
+				board: null,
+				players: null,
+				steps: null,
+			}
+			function init({player1Name, player2Name}) {
+				gameState.size = 3;
+				gameState.board = [
+					[0, 0, 0],
+					[0, 0, 0],
+					[0, 0, 0]
+				];
+				gameState.over = false;
+				gameState.players = initPlayer(player1Name, player2Name);
+				gameState.steps = [];
+			}
+			
+			function getCellId(i, j) {
+				return 'c' + (i+1) + '-' + (j+1);
+			}
+			
+			function render() {
+				gameState.board.forEach(function iterBoardRow(row, i) {
+					row.forEach(function iterBoardCell(cellVal, j) {
+						var cellId = getCellId(i, j);
+						var cellText = {
+							[p1Key]: "X",
+							[p2Key]: "O",
+							"0": ""
+						}[cellVal.toString()];
+						console.log(cellId);
+						document.getElementById(cellId).textContent = cellText;
+					});
+				})
+				
+			}
+			
+			function evaluateRows() {
+				var winner = 0;
+				for (var i = 0; i < gameState.size; i++) {
+					var countP1 = 0;
+					var countP2 = 0;
+					for (var j = 0; j < gameState.size; j++) {
+						var cell = gameState.board[i][j];
+						if (cell === p1Key) {
+							countP1++;
+						} else if (cell === p2Key) {
+							countP2++;
+						}
+					}
+					if (countP1 === gameState.size) {
+						winner = p1Key;
+						break;
+					} else if (countP2 === gameState.size) {
+						winner = p2Key;
+						break;
+					}
+				}
+				return winner;	
+			}
+			
+			function evaluateCols() {
+				var winner = 0;
+				for (var j = 0; j < gameState.size; j++) {
+					var countP1 = 0;
+					var countP2 = 0;
+					for (var i = 0; i < gameState.size; i++) {
+						var cell = gameState.board[i][j];
+						if (cell === p1Key) {
+							countP1++;
+						} else if (cell === p2Key) {
+							countP2++;
+						}
+					}
+					if (countP1 === gameState.size) {
+						winner = p1Key;
+						break;
+					} else if (countP2 === gameState.size) {
+						winner = p2Key;
+						break;
+					}
+				}
+				return winner;	
+			}
+			
+			function evaluateDiags() {
+				var winner = 0;
+				var countP1 = 0;
+				var countP2 = 0;
+				for (var i = 0; i < gameState.size; i++) {
+					var cell = gameState.board[i][i];
+					if (cell === p1Key) {
+						countP1++;
+					} else if (cell === p2Key) {
+						countP2++;
+					}
+				}
+				if (countP1 === gameState.size) {
+					winner = p1Key;
+				} else if (countP2 === gameState.size) {
+					winner = p2Key;
+				}
+				var countP1 = 0;
+				var countP2 = 0;
+				for (var i = 0; i < gameState.size; i++) {
+					var cell = gameState.board[i][gameState.size - i - 1];
+					if (cell === p1Key) {
+						countP1++;
+					} else if (cell === p2Key) {
+						countP2++;
+					}
+				}
+				if (countP1 === gameState.size) {
+					winner = p1Key;
+				} else if (countP2 === gameState.size) {
+					winner = p2Key;
+				}
+				return winner;	
+			}
+			
+			function getPlayerName(pKey) {
+				return gameState.players[pKey].name;
+			}
+			
+			function evaluate() {
+				var result = evaluateRows();
+				if (result !== 0) {
+					alert(getPlayerName(result) + ' is winner!');
+					gameState.over = true;
+					return;
+				}
+				result = evaluateCols();
+				if (result !== 0) {
+					alert(getPlayerName(result) + ' is winner!');
+					gameState.over = true;
+					return;
+				}
+				result = evaluateDiags();
+				if (result !== 0) {
+					alert(getPlayerName(result) + ' is winner!');
+					gameState.over = true;
+					return;
+				}
+				if (gameState.steps.length === gameState.size * gameState.size) {
+					alert('is a draw!');
+					gameState.over = true;
+				}
+			}
+			
+			function bind(i, j) {
+				var cellId = getCellId(i, j);
+				document.getElementById(cellId).addEventListener("click", function onclick() {
+					if (gameState.over) {
+						return;
+					}
+					if (gameState.board[i][j] !== 0) {
+						return;
+					}
+					var activePlayer = gameState.players.active;
+					gameState.board[i][j] = activePlayer;
+					gameState.steps.push({
+						player: activePlayer,
+						move: [i, j]
+					})
+					render();
+					evaluate();
+					// switch side
+					if (activePlayer === p1Key) {
+						gameState.players.active = p2Key;
+					} else if (activePlayer === p2Key) {
+						gameState.players.active = p1Key;
+					}
+					updatePlayerDisplay();
+				})
+			}
+			
+			function updatePlayerDisplay() {
+				var activePlayer = gameState.players.active;
+				var p1label = document.getElementById("player1NameLabel");
+				p1label.textContent = gameState.players[p1Key].pick;
+				var p2label = document.getElementById("player2NameLabel");
+				p2label.textContent = gameState.players[p2Key].pick;
+				if (activePlayer === p1Key) {
+					p1label.style.background = "lightblue";
+					p2label.style.background = "none";
+				} else if (activePlayer === p2Key) {
+					p2label.style.background = "lightblue";
+					p1label.style.background = "none";
+				}
+			}
+			
+			function resetPlayerDisplay() {
+				var p1label = document.getElementById("player1NameLabel");
+				p1label.textContent = "Player 1";
+				var p2label = document.getElementById("player2NameLabel");
+				p2label.textContent = "Player 2";
+				p1label.style.background = "none";
+				p2label.style.background = "none";
+			}
+			
+			function resetBoard() {
+			}
+			
+			
+			document.getElementById("start").addEventListener("click", function onclick() {
+				var player1Name = document.getElementById("player1Name").value;
+				var player2Name = document.getElementById("player2Name").value;
+				init({ player1Name, player2Name });
+				updatePlayerDisplay();
+				render();
+				for (var i = 0; i < gameState.board.length; i++) {
+					for (var j = 0; j < gameState.board[0].length; j++) {
+						bind(i, j);
+					}
+				}
+				gameState.over = false;
+				document.getElementById("start").disabled = true;
+			});
+			
+			document.getElementById("reset").addEventListener("click", function onclick() {
+				init({player1Name: "P1", player2Name: "P2"});
+				resetPlayerDisplay();
+				render();
+				gameState.over = true;
+				document.getElementById("start").disabled = false;
+			});
+		</script>
+	</body>
+</html>
