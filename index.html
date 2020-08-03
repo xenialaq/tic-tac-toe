@@ -41,7 +41,7 @@
 			var p1Key = "PLAYER1";
 			var p2Key = "PLAYER2";
 			function initPlayer(player1Name, player2Name) {
-				var player1Playing = Math.random() > 0;
+				var player1Playing = Math.random() > 0.5;
 				return {
 					active: player1Playing ? p1Key : p2Key,
 					[p1Key]: {name: player1Name, pick: player1Playing ? 'X' : 'O'},
